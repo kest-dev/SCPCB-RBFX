@@ -1,5 +1,5 @@
 # SCP: Containment Breach (RBFX)
----
+
 The game is based on the works of the game SCP: Containment Breach and the SCP Foundation community (http://www.scp-wiki.net/).
 
 This game and the source code are licensed under Creative Commons Attribution-ShareAlike 3.0 License.
