@@ -19,56 +19,24 @@
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 
-using namespace Urho3D;
+#include "Main.h"
 
-class MyApplication : public Application
-{
-    // Enable type information.
-    URHO3D_OBJECT(MyApplication, Application);
-
-public:
-    /// Construct.
-    explicit MyApplication(Context* context);
-
-    /// Setup before engine initialization. Modifies the engine parameters.
-    void Setup() override;
-    /// Setup after engine initialization. Creates the logo, console & debug HUD.
-    void Start() override;
-    /// Cleanup after the main loop. Called by Application.
-    void Stop() override;
-
-private:
-    /// Update event handler.
-    void Update(VariantMap& eventData);
-
-    /// Scene to be rendered.
-    SharedPtr<Scene> scene_;
-    /// Viewport that renders the scene.
-    SharedPtr<Viewport> viewport_;
-
-    /// Geometry in the scene.
-    WeakPtr<Node> geometryNode_;
-};
-
-// Define entry point.
-URHO3D_DEFINE_APPLICATION_MAIN(MyApplication);
-
-MyApplication::MyApplication(Context *context)
+SCPCB::SCPCB(Context *context)
     : Application(context)
 {
 }
 
-void MyApplication::Setup()
+void SCPCB::Setup()
 {
     // Organization and application names are used to create writeable folder in OS-specific location.
     // For example, on Windows it would be C:/Users/<username>/AppData/Roaming/<orgname>/<appname>
-    engineParameters_[EP_ORGANIZATION_NAME] = "My Organization";
-    engineParameters_[EP_APPLICATION_NAME] = "My Application";
+    engineParameters_[EP_ORGANIZATION_NAME] = "SCP - Containment Breach";
+    engineParameters_[EP_APPLICATION_NAME] = "SCP - Containment Breach RBFX";
     // conf:// directory is mapped to that writeable folder.
-    engineParameters_[EP_LOG_NAME] = "conf://MyApplication.log";
+    engineParameters_[EP_LOG_NAME] = "conf://SCPCB.log";
 }
 
-void MyApplication::Start()
+void SCPCB::Start()
 {
     auto cache = GetSubsystem<ResourceCache>();
     auto renderer = GetSubsystem<Renderer>();
@@ -103,15 +71,15 @@ void MyApplication::Start()
     const auto viewport = MakeShared<Viewport>(context_, scene_, camera);
     renderer->SetViewport(0, viewport);
 
-    SubscribeToEvent(E_UPDATE, &MyApplication::Update);
+    SubscribeToEvent(E_UPDATE, &SCPCB::Update);
 }
 
-void MyApplication::Stop()
+void SCPCB::Stop()
 {
 
 }
 
-void MyApplication::Update(VariantMap& eventData)
+void SCPCB::Update(VariantMap& eventData)
 {
     const float timeStep = eventData[Update::P_TIMESTEP].GetFloat();
     geometryNode_->Rotate(Quaternion{10 * timeStep, Vector3::UP}, TS_WORLD);
