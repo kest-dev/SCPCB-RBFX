@@ -13,12 +13,12 @@ http://creativecommons.org/licenses/by-sa/3.0/
     - [ ] Injury System
 - [ ] Map Generation 
 - [ ] NPCs
-      - [ ] SCP-173
-      - [ ] SCP-096
-      - [ ] SCP-106
-      - [ ] SCP-049
-      - [ ] Nine-Tailed Fox
-      - [ ] Guard (Just required for intro)
+    - [ ] SCP-173
+    - [ ] SCP-096
+    - [ ] SCP-106
+    - [ ] SCP-049
+    - [ ] Nine-Tailed Fox
+    - [ ] Guard (Just required for intro)
 - [ ] Inventory
 - [ ] Menus
 - [ ] Items
