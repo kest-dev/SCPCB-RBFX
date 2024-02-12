@@ -22,11 +22,7 @@ jobs:
         with:
           path: ${{ env.ci_source_dir }}
           fetch-depth: 1
-
-      - name: Checkout RBFX submodule
-          uses: actions/checkout@v2
-          with:
-            submodules: recursive
+          submodules: recursive
 
       - name: Download SDK
         uses: robinraju/release-downloader@v1.8
