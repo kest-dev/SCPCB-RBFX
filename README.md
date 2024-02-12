@@ -22,3 +22,9 @@ http://creativecommons.org/licenses/by-sa/3.0/
 - [ ] Inventory
 - [ ] Menus
 - [ ] Items
+
+# Technical Demos
+We will be submitting tech demos via the releases tab. This section will be updated once those demos are ready to be presented.
+
+- Current demos
+  * None
