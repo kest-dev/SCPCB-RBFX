@@ -21,6 +21,12 @@ RMesh::RMesh(Context* context)
 {
 }
 
+void RMesh::RegisterObject(Context *context)
+{
+    if(!context->IsReflected<RMesh>())
+        context->AddFactoryReflection<RMesh>();
+}
+
 RMesh::~RMesh() = default;
 
 ea::string RMesh::ReadBlitzString(AbstractFilePtr src)
@@ -527,19 +533,12 @@ bool RMesh::LoadFile(ea::string path)
             emitter->SetFarDistance(sfxrange * 1.35f);
             emitter->Play(soundfx);
         }
-        else if (entityType == "flu_light")
+        else if(entityType == "playerstart")
         {
-            Vector3 pos = source->ReadVector3();
-            Vector3 pos2 = source->ReadVector3();
-            int id = source->ReadInt();
-        }
-        else if (entityType == "generator" || entityType == "fusebox")
-        {
-            ea::string file = ReadBlitzString(source);
+            Vector3 startPoint = source->ReadVector3();
 
-            Vector3 pos = source->ReadVector3();
-            Vector3 rot = source->ReadVector3();
-            Vector3 scale = source->ReadVector3();
+            ea::string angle = ReadBlitzString(source);
+
         }
     }
 

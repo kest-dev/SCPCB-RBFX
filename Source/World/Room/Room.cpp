@@ -1,9 +1,18 @@
 #include "Room.h"
 
+#include "Rooms/Room173Intro.h"
+
 Room::Room(Context* context)
 	: Component(context)
 	, probability_(0)
 {
+    Room173Intro::RegisterObject(context);
+}
+
+void Room::RegisterObject(Context *context)
+{
+    if(!context->IsReflected<Room>())
+        context->AddFactoryReflection<Room>();
 }
 
 Room::~Room()
@@ -42,6 +51,11 @@ bool Room::LoadXML(const ea::string& path)
 			rmesh_.push_back("Rooms/" + name);
 			rmesh = rmesh.GetNext("rmesh");
 		}
+
+        roomClass_ = roomName.GetAttribute("id");
+        URHO3D_LOGDEBUG("Room Class: " + roomClass_);
+
+        roomComp_ = node_->CreateComponent(roomClass_);
 	}
 	else
 	{
