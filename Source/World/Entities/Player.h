@@ -9,6 +9,7 @@
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Input/InputMap.h>
 #include <Urho3D/Core/Context.h>
+#include <Urho3D/Audio/SoundSource.h>
 
 using namespace Urho3D;
 
@@ -24,6 +25,18 @@ public:
 
     void FixedUpdate(float timeStep) override;
 
+    void SetHealth(float health)
+    {
+        injuries_ = health;
+    }
+
+    void DamagePlayer(float damage);
+
+    float GetHealth()
+    {
+        return injuries_;
+    }
+
 private:
     void Update(VariantMap& eventData);
 
@@ -35,9 +48,12 @@ private:
 
     SharedPtr<InputMap> inputMap_;
 
+    SharedPtr<SoundSource> footStep_;
+    SharedPtr<SoundSource> playerSource_;
+
     float shake_;
     float crouchState_;
-    float health_;
+    float injuries_;
     float up_;
     float sprint_;
 

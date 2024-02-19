@@ -74,7 +74,7 @@
 			}
 		},
 		{
-			"key": "Crouch",
+			"key": "Sprint",
 			"value": {
 				"keys": [
 					{
@@ -83,6 +83,16 @@
 				]
 			}
 		},
+		{
+            "key": "Crouch",
+        	"value": {
+        		"keys": [
+        			{
+        				"scancode": "Left Ctrl"
+        			}
+        		]
+        	}
+        },
 		{
 			"key": "Left",
 			"value": {
