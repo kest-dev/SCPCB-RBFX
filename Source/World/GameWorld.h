@@ -24,4 +24,9 @@ protected:
     void Start() override;
 
     void Update(VariantMap& eventData);
+
+private:
+    SharedPtr<Player> player_;
+
+    float hp = 3.0f;
 };
