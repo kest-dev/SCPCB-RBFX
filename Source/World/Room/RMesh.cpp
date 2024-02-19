@@ -74,6 +74,9 @@ bool RMesh::LoadFile(ea::string path)
     //Define the contents that the mesh contains
     unsigned elements = MASK_POSITION | MASK_NORMAL | MASK_TEXCOORD1 | MASK_TEXCOORD2 | MASK_TANGENT;
 
+    SharedPtr<Material> invMaterial(new Material(context_));
+    invMaterial = cache->GetResource<Material>("Materials/Map/invisible_collision.xml");
+
     for (unsigned i = 0; i < numMeshBuffers; i++)
     {
         SharedPtr<Model> model(new Model(context_));
@@ -318,6 +321,7 @@ bool RMesh::LoadFile(ea::string path)
         tempModel->SetOccluder(true);
         tempModel->SetModel(model);
         tempModel->SetMaterial(material);
+        tempModel->SetLightMask(5);
 
         //Apply light map support
         tempModel->SetGlobalIlluminationType(GlobalIlluminationType::UseLightMap);
@@ -345,6 +349,8 @@ bool RMesh::LoadFile(ea::string path)
         SharedPtr<Geometry> gBuffer(new Geometry(context_));
 
         StaticModel* tempModel = node_->CreateComponent<StaticModel>();
+
+        CollisionShape* shape = node_->CreateComponent<CollisionShape>();
 
         //Collect all the vertices
         unsigned vertices = source->ReadUInt();
@@ -428,8 +434,11 @@ bool RMesh::LoadFile(ea::string path)
         model->SetBoundingBox(boundingBox_);
         models_.push_back(model);
 
+        shape->SetTriangleMesh(model);
+
         //Apply the model and map texture to the static model
         tempModel->SetModel(model);
+        tempModel->SetMaterial(invMaterial);
 
         staticModels_.push_back(tempModel);
 
@@ -458,6 +467,7 @@ bool RMesh::LoadFile(ea::string path)
             auto* light = lightNode->CreateComponent<Light>();
             light->SetLightType(LIGHT_POINT);
             light->SetSpecularIntensity(0.4f);
+            light->SetLightMask(light->GetLightMask() - 5);
             light->SetColor(tColor);
             light->SetRange(range);
             light->SetCastShadows(true);

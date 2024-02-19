@@ -13,7 +13,12 @@ public:
 
     static void RegisterObject(Context* context);
 
+    void OnSceneSet(Scene* scene) override;
+
 protected:
     void FillRoom() override;
     void UpdateEvent(VariantMap &eventData) override;
+
+private:
+    void CreateDoor(Vector3& pos);
 };

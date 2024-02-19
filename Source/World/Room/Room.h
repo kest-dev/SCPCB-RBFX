@@ -39,10 +39,12 @@ public:
     Component* roomComp_;
 
     Vector2 gridPos_;
-
-    void LoadRMesh();
 protected:
     virtual void FillRoom() {};
 
     virtual void UpdateEvent(VariantMap &eventData) {};
+
+    const float ROOMSCALE = 8.0f / 2048.0f;
+private:
+    void LoadRMesh();
 };

@@ -22,46 +22,45 @@ Room::~Room()
 bool Room::LoadXML(const ea::string& path)
 {
 	roomXML_ = MakeShared<XMLFile>(context_);
-	if (roomXML_->LoadFile(path))
-	{
-		XMLElement root = roomXML_->GetRoot();
-		XMLElement roomName = root.GetChild("room");
-		name_ = roomName.GetAttribute("name");
+	if (!roomXML_->LoadFile(path))
+    {
+        URHO3D_LOGERROR("Failed to load: " + path + " room!");
+        return false;
+    }
 
-		XMLElement roomShape = root.GetChild("roomshape");
-		shape_ = roomShape.GetAttribute("shape");
+    XMLElement root = roomXML_->GetRoot();
+    XMLElement roomName = root.GetChild("room");
+    name_ = roomName.GetAttribute("name");
 
-		XMLElement roomProbability = root.GetChild("probability");
-		probability_ = roomProbability.GetInt("value");
+    XMLElement roomShape = root.GetChild("roomshape");
+    shape_ = roomShape.GetAttribute("shape");
 
-		XMLElement zone = root.GetChild("zone");
-		while (zone)
-		{
-			ea::string name = zone.GetAttribute("name");
-			URHO3D_LOGDEBUG("Zone: " + name);
-			zone_.push_back(name);
-			zone = zone.GetNext("zone");
-		}
+    XMLElement roomProbability = root.GetChild("probability");
+    probability_ = roomProbability.GetInt("value");
 
-		XMLElement rmesh = root.GetChild("rmesh");
-		while (rmesh)
-		{
-			ea::string name = rmesh.GetAttribute("name");
-			URHO3D_LOGDEBUG("RMesh: " + name);
-			rmesh_.push_back("Rooms/" + name);
-			rmesh = rmesh.GetNext("rmesh");
-		}
+    XMLElement zone = root.GetChild("zone");
+    while (zone)
+    {
+        ea::string name = zone.GetAttribute("name");
+        URHO3D_LOGDEBUG("Zone: " + name);
+        zone_.push_back(name);
+        zone = zone.GetNext("zone");
+    }
 
-        roomClass_ = roomName.GetAttribute("id");
-        URHO3D_LOGDEBUG("Room Class: " + roomClass_);
+    XMLElement rmesh = root.GetChild("rmesh");
+    while (rmesh)
+    {
+        ea::string name = rmesh.GetAttribute("name");
+        URHO3D_LOGDEBUG("RMesh: " + name);
+        rmesh_.push_back("Rooms/" + name);
+        rmesh = rmesh.GetNext("rmesh");
+    }
 
-        roomComp_ = node_->CreateComponent(roomClass_);
-	}
-	else
-	{
-		URHO3D_LOGERROR("Failed to load: " + path + " room!");
-		return false;
-	}
+    roomClass_ = roomName.GetAttribute("id");
+    URHO3D_LOGDEBUG("Room Class: " + roomClass_);
+
+    roomComp_ = node_->CreateComponent(roomClass_);
+    LoadRMesh();
 
     roomXML_.Reset();
 
