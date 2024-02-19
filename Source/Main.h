@@ -1,3 +1,7 @@
+#pragma once
+
+#include <Urho3D/Engine/StateManager.h>
+
 using namespace Urho3D;
 
 class SCPCB : public Application
@@ -29,5 +33,26 @@ private:
     WeakPtr<Node> geometryNode_;
 };
 
-// Define entry point.
-URHO3D_DEFINE_APPLICATION_MAIN(SCPCB);
+
+class GameState : public ApplicationState
+{
+    // Enable type information.
+    URHO3D_OBJECT(GameState, ApplicationState);
+
+public:
+    /// Construct.
+    explicit GameState(Context* context);
+
+protected:
+    /// Activate game state. Executed by StateManager.
+    void Activate(StringVariantMap& bundle) override;
+
+    /// Scene.
+    SharedPtr<Scene> scene_;
+
+    /// Executes when the application state starts.
+    virtual void Start() {}
+
+    /// Is mouse enabled?
+    bool mouseEnabled_;
+};
