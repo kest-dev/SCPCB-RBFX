@@ -6,10 +6,13 @@
 #include "Player.h"
 
 Player::Player(Context *context)
-    : MoveAndOrbitComponent(context)
-    , shake_(0.0f)
-    , health_(0.0f)
-    , crouchState_(0.0f)
+        : MoveAndOrbitComponent(context)
+        , shake_(0.0f)
+        , health_(0.0f)
+        , crouchState_(0.0f)
+        , mouseSensitivity_(0.75f)
+        , up_(0.0f)
+        , sprint_(1.0f)
 {
 }
 
@@ -39,9 +42,10 @@ void Player::Start()
     const auto viewport = MakeShared<Viewport>(context_, GetScene(), camera_);
     GetSubsystem<Renderer>()->SetViewport(0, viewport);
 
-    cameraController_ = cameraNode_->CreateComponent<FreeFlyController>();
-    cameraController_->SetSpeed(0.0f);
-    cameraController_->SetAcceleratedSpeed(0.0f);
+    cameraFlyController_ = cameraNode_->CreateComponent<FreeFlyController>();
+    cameraFlyController_->SetSpeed(0.0f);
+    cameraFlyController_->SetAcceleratedSpeed(0.0f);
+    cameraFlyController_->SetEnabled(false);
 
     characterController_ = node_->CreateComponent<KinematicCharacterController>();
     characterController_->SetHeight(1.05f);
@@ -58,26 +62,39 @@ void Player::Update(VariantMap& eventData)
 
     float timeStep = eventData[P_TIMESTEP].GetFloat();
 
+    //If (Not UnableToMove%) Then Shake# = (Shake + FPSfactor * Min(Sprint, 1.5) * 7) Mod 720
     /*
      Local up# = (Sin(Shake) / (20.0+CrouchState*20.0))*0.6;, side# = Cos(Shake / 2.0) / 35.0
 		Local roll# = Max(Min(Sin(Shake/2)*2.5*Min(Injuries+0.25,3.0),8.0),-8.0)
      */
 
-    float up = (Sin(shake_) / (20.0f + crouchState_ * 20.0f)) * 0.6f;
-    float roll = Max(Min(Sin(shake_ / 2.0f) * 2.5f * Min(health_ + 0.25, 3.0f), 8.0f), -8.0f);
+    if(GetVelocity().LengthSquared() > 0.0f)
+    {
+        shake_ = Mod((shake_ + (timeStep * 70.0f) * Min(sprint_, 1.5f) * 7.0f), 720.0f);
+        up_ = (Sin(shake_) / (20.0f + crouchState_ * 20.0f)) * 0.6f;
+    }
 
-    //cameraNode_->SetWorldPosition(Vector3(cameraNode_->GetWorldPosition().x_,
-    //                                 cameraNode_->GetWorldPosition().y_ + up + 0.6f + crouchState_ * -0.3f,
-    //                                 cameraNode_->GetWorldPosition().z_));
-    //cameraNode_->SetWorldRotation(Quaternion(cameraNode_->GetWorldRotation().x_,
-    //                                                cameraNode_->GetWorldRotation().y_,
-    //                                                roll * 0.5f));
+    float roll = Max(Min(Sin(shake_  / 2.0f) * 2.5f * Min(health_ + 0.25, 3.0f), 8.0f), -8.0f);
 
+    const auto* input = GetSubsystem<Input>();
+    const IntVector2 mouseMove = input->GetMouseMove();
+    mouseMovement_.y_ += mouseSensitivity_ * mouseMove.x_;
+    mouseMovement_.x_ += mouseSensitivity_ * mouseMove.y_;
+    mouseMovement_.z_ = roll;
+
+    mouseMovement_.x_ = Clamp(mouseMovement_.x_, -75.0f, 75.0f);
+
+    cameraNode_->SetRotation(Quaternion(mouseMovement_));
+    cameraNode_->SetPosition(Vector3(cameraNode_->GetPosition().x_,
+                                     (node_->GetPosition().y_ + 1.65f) + up_ ,
+                                     cameraNode_->GetPosition().z_));
+
+    URHO3D_LOGDEBUGF("%f", cameraNode_->GetPosition().y_);
 }
 
 void Player::FixedUpdate(float timeStep)
 {
-    const float moveSpeed = 5.0f;
+    const float moveSpeed = 1.5f + sprint_;
 
     if (!camera_ || !characterController_)
     {
@@ -85,12 +102,18 @@ void Player::FixedUpdate(float timeStep)
         return;
     }
 
-    if(GetVelocity().LengthSquared() > 0.0f)
-        shake_ = Mod((shake_ + timeStep * 7.0f), 720.0f);
-
     // Get local move direction.
     Vector3 localDirection = GetVelocity();
     localDirection.Normalize();
+
+    if(inputMap_->Evaluate("Sprint"))
+    {
+        sprint_ = 2.5f;
+    }
+    else
+    {
+        sprint_ = 1.0f;
+    }
 
     // Get world move direction.
     const float yawAngle = cameraNode_->GetWorldRotation().YawAngle();

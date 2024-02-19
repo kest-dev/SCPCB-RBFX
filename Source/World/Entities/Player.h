@@ -30,7 +30,7 @@ private:
     Node* cameraNode_;
 
     WeakPtr<Camera> camera_;
-    WeakPtr<FreeFlyController> cameraController_;
+    WeakPtr<FreeFlyController> cameraFlyController_;
     WeakPtr<KinematicCharacterController> characterController_;
 
     SharedPtr<InputMap> inputMap_;
@@ -38,4 +38,9 @@ private:
     float shake_;
     float crouchState_;
     float health_;
+    float up_;
+    float sprint_;
+
+    float mouseSensitivity_;
+    Vector3 mouseMovement_;
 };
