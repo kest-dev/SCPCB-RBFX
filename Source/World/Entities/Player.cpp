@@ -1,7 +1,13 @@
 #include <Urho3D/Audio/Audio.h>
 #include <Urho3D/Audio/SoundListener.h>
+#include <Urho3D/Audio/Sound.h>
 #include <Urho3D/Graphics/Renderer.h>
 #include <Urho3D/Core/CoreEvents.h>
+#include <Urho3D/Resource/ResourceCache.h>
+#include <Urho3D/Graphics/StaticModel.h>
+#include <Urho3D/Physics/PhysicsEvents.h>
+#include <Urho3D/Physics/PhysicsWorld.h>
+#include <Urho3D/Physics/RigidBody.h>
 
 #include "Player.h"
 
@@ -11,9 +17,12 @@ Player::Player(Context *context)
         , injuries_(3.0f)
         , crouchState_(0.0f)
         , mouseSensitivity_(0.75f)
-        , up_(0.0f)
         , sprint_(1.0f)
 {
+    stepSounds_.push_back(StepSound(8, 8, "Step", "Run"));
+    stepSounds_.push_back(StepSound(8, 8, "StepMetal", "RunMetal"));
+    stepSounds_.push_back(StepSound(3, 0, "StepPD", ""));
+    stepSounds_.push_back(StepSound(3, 0, "StepForest", ""));
 }
 
 void Player::RegisterObject(Context *context)
@@ -22,11 +31,13 @@ void Player::RegisterObject(Context *context)
         context->AddFactoryReflection<Player>();
 }
 
-void Player::Start()
+void Player::DelayedStart()
 {
     const auto moveAndOrbit= node_->CreateComponent<MoveAndOrbitController>();
 
     moveAndOrbit->LoadInputMap("Input/PlayerControls.inputmap");
+
+    auto cache = GetSubsystem<ResourceCache>();
 
     inputMap_ = moveAndOrbit->GetInputMap();
 
@@ -34,6 +45,7 @@ void Player::Start()
     cameraNode_->SetPosition(Vector3::UP * 1.3f);
     cameraNode_->CreateComponent<Camera>();
     camera_ = cameraNode_->GetComponent<Camera>();
+    camera_->SetFov(60.0f);
 
     footStep_ = cameraNode_->CreateComponent<SoundSource>();
     playerSource_ = cameraNode_->CreateComponent<SoundSource>();
@@ -56,7 +68,32 @@ void Player::Start()
     characterController_->SetOffset(Vector3(0.0f, 0.9f, 0.0f));
     characterController_->SetStepHeight(0.05f);
 
+    for(int i = 0; i < stepSounds_.size(); i++)
+    {
+        for (int j = 0; j < Max(stepSounds_[i].maxWalkSounds_, stepSounds_[i].maxRunSounds_); j++)
+        {
+            if (j < stepSounds_[i].maxWalkSounds_)
+            {
+                stepSounds_[i].walkSounds_.push_back(
+                        cache->GetResource<Sound>(ToString("Sounds/Step/%s%d.ogg", stepSounds_[i].walkSuffix_.c_str(), (j + 1))));
+            }
+
+            if (j < stepSounds_[i].maxRunSounds_)
+            {
+                stepSounds_[i].runSounds_.push_back(
+                        cache->GetResource<Sound>(ToString("Sounds/Step/%s%d.ogg", stepSounds_[i].runSuffix_.c_str(), (j + 1))));
+            }
+        }
+    }
+
+    stepType_ = REGULAR;
+}
+
+void Player::Start()
+{
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(Player, Update));
+
+    SubscribeToEvent(E_PHYSICSCOLLISION, URHO3D_HANDLER(Player, HandleNodeCollision));
 }
 
 void Player::Update(VariantMap& eventData)
@@ -67,17 +104,13 @@ void Player::Update(VariantMap& eventData)
 
     float lastShake = shake_;
 
-    //If (Not UnableToMove%) Then Shake# = (Shake + FPSfactor * Min(Sprint, 1.5) * 7) Mod 720
-    /*
-     Local up# = (Sin(Shake) / (20.0+CrouchState*20.0))*0.6;, side# = Cos(Shake / 2.0) / 35.0
-		Local roll# = Max(Min(Sin(Shake/2)*2.5*Min(Injuries+0.25,3.0),8.0),-8.0)
-     */
-
     if(GetVelocity().LengthSquared() > 0.0f)
     {
+        //This 70.0f is left over from Containment Breach's FPSFactor value.
         shake_ = Mod((shake_ + (timeStep * 70.0f) * Min(sprint_, 1.5f) * 7.0f), 720.0f);
-        up_ = (Sin(shake_) / (20.0f + crouchState_ * 20.0f)) * 0.6f;
     }
+
+    float up = (Sin(shake_) / (20.0f + crouchState_ * 20.0f)) * 0.6f;
 
     float roll = Max(Min(Sin(shake_  / 2.0f) * 2.5f * Min(injuries_ + 0.25, 3.0f), 8.0f), -8.0f);
 
@@ -94,13 +127,20 @@ void Player::Update(VariantMap& eventData)
 
         cameraNode_->SetRotation(Quaternion(mouseMovement_));
         cameraNode_->SetPosition(Vector3(cameraNode_->GetPosition().x_,
-                                         (node_->GetPosition().y_ + 1.65f) + up_,
+                                         (node_->GetPosition().y_ + 1.65f) + up,
                                          cameraNode_->GetPosition().z_));
     }
 
     if ((lastShake <= 270.0f && shake_ > 270.0f) || (lastShake <= 630.0f && shake_ > 630.0f))
     {
-
+        if(sprint_ > 1.0f)
+        {
+            playerSource_->Play(stepSounds_[stepType_].runSounds_[Random(0, stepSounds_[stepType_].maxRunSounds_ - 1)]);
+        }
+        else
+        {
+            playerSource_->Play(stepSounds_[stepType_].walkSounds_[Random(0, stepSounds_[stepType_].maxWalkSounds_ - 1)]);
+        }
     }
 }
 
@@ -124,7 +164,7 @@ void Player::FixedUpdate(float timeStep)
     Vector3 localDirection = GetVelocity();
     localDirection.Normalize();
 
-    if(inputMap_->Evaluate("Sprint"))
+    if(inputMap_->Evaluate("Sprint") && crouchState_ < 10.0f)
     {
         sprint_ = 2.5f;
     }
@@ -133,10 +173,8 @@ void Player::FixedUpdate(float timeStep)
         sprint_ = 1.0f;
     }
 
-    if (inputMap_->Evaluate("Crouch"))
+    if (inputMap_->Evaluate("Crouch") && sprint_ < 2.5f)
     {
-        URHO3D_LOGDEBUG("Crouch");
-
         characterController_->SetHeight(0.7f);
 
         cameraNode_->SetPosition(Vector3::UP * 0.65f);
@@ -156,4 +194,9 @@ void Player::FixedUpdate(float timeStep)
     const Vector3 worldDirection = Quaternion{ yawAngle, Vector3::UP } * localDirection;
     Vector3 pos = node_->GetPosition();
     characterController_->SetWalkIncrement(worldDirection * moveSpeed * timeStep);
+}
+
+void Player::HandleNodeCollision(StringHash eventType, VariantMap& eventData)
+{
+    URHO3D_LOGDEBUG("testcollision");
 }
