@@ -28,5 +28,5 @@ protected:
 private:
     SharedPtr<Player> player_;
 
-    float hp = 3.0f;
+    float hp = 0.0f;
 };
