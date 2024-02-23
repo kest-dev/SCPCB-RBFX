@@ -1,7 +1,6 @@
 #include <Urho3D/Scene/Node.h>
 #include <Urho3D/Core/Context.h>
 #include <Urho3D/SystemUI/SystemUI.h>
-#include <Urho3D/SystemUI/TransformGizmo.h>
 #include <Urho3D/SystemUI/Console.h>
 
 #include "GameWorld.h"
@@ -39,8 +38,10 @@ void GameWorld::Start()
 void GameWorld::Update(VariantMap &eventData)
 {
     auto input = GetSubsystem<Input>();
-    if(input->GetKeyPress(KEY_0))
+    if(input->GetKeyPress(KEY_F3))
+    {
         mouseEnabled_ = !mouseEnabled_;
+    }
 
     input->SetMouseMode(mouseEnabled_ ? MM_FREE : MM_ABSOLUTE); // TODO: Check if "MM_ABSOLUTE" is correct!
     input->SetMouseVisible(mouseEnabled_);
